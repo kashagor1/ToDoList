@@ -1,36 +1,147 @@
 const express = require("express");
 const bodyParser =  require("body-parser");
-const date =  require(__dirname+"/date.js")
+//const date =  require(__dirname+"/date.js")
+const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const app = express();
-let items = ["Buy Food","Eat Food","Cook Food"];
-let workItems =  [];
+
+app.set("view engine","ejs");
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.static("public"));
 
-app.set("view engine","ejs");
+
+mongoose.connect('mongodb://localhost:27017/todolistDBVV', {useNewUrlParser: true});
+
+const itemSchema = {
+	name : String
+}
+
+const Item =  mongoose.model("Item",itemSchema);
+
+
+const item1 = new Item({
+  name: "Welcome to your todolist!"
+});
+
+const item2 = new Item({
+  name: "Hit the + button to add a new item."
+});
+
+const item3 = new Item({
+  name: "<-- Hit this to delete an item."
+});
+
+const df = [item1,item2,item3];
+
+
+const listSchema =  {
+	name: String,
+	item: [itemSchema]
+};
+
+const List = mongoose.model("List",listSchema);
+
+
 
 app.get("/",(req,res)=>{
 
-	let day = date.getDay();
 	
-	res.render("list",{listTitle:day,newListItems: items}); // {value_to_be_repaced:replacing_value} 
+		Item.find((err,result)=>{
+		
+		if(result.length===0){
+		Item.insertMany(df,(err)=>{
+			if(err){
+				console.log(err);
+			}else{
+				console.log("Successful");
+			}
+		});
+		res.redirect("/");
+		}else{
+					res.render("list",{listTitle:"Today",newListItems: result}); // {value_to_be_repaced:replacing_value} 
+		}
+		});
+});
+
+/*Customer List*/
+
+app.get("/:cURL",(req,res)=>{
+	const customListName = _.capitalize(req.params.cURL);
+
+	List.findOne({name:customListName},(err,result)=>{
+		if(!err){
+			if(!result){
+				/*This is going to create a new list if none exits*/
+					const newList =  new List({
+							name: customListName,
+							item: df
+						});
+					newList.save();
+					res.redirect("/"+customListName);
+			}else{
+				/*Show an existing list*/
+					res.render("list",{listTitle:customListName,newListItems: result.item}); // {value_to_be_repaced:replacing_value} 
+			}
+		}
+
+	
+		
+	});
+	
 
 });
+
+
+/*Posting an item to list*/
+
 app.post("/",(req,res)=>{
-	item =  req.body.newtask;
-	if(req.body.list === "Work"){
-			workItems.push(item);
-			res.redirect("/work");
+	newPage =  req.body.list;
+	console.log(newPage);
+	newTask = new Item({name : req.body.newtask});
+
+		
+	if(newPage === "Today"){
+			newTask.save();
+			res.redirect("/");
 	}else{
-		items.push(item);
-		res.redirect("/");
+		List.findOne({name:newPage},(err,result)=>{
+			result.item.push(newTask);
+			result.save();
+			console.log(result);
+			res.redirect("/"+newPage);
+		})
 	}
+
+
+	
 });
-app.get("/work",(req,res)=>{
-	res.render("list",{listTitle:"Work",newListItems:workItems});
-});
+
+
+
+
+app.post("/delete",(req,res)=>{
+	const id = req.body.checkedItem;
+	const newPage =  req.body.listName;
+	
+	if(newPage === "Today"){
+		Item.findByIdAndRemove(id,(err)=>{
+		console.log(err);
+		res.redirect("/");
+	});
+	}else{
+		List.findOneAndUpdate({name:newPage},{$pull:{item:{_id:id}}},(err,result)=>{
+			if(!err){
+				res.redirect("/"+newPage);
+			}
+		});
+	}
+	
+	
+})
+
+
 
 app.get("/about",(req,res)=>{
 	res.render("about");
