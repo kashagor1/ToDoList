@@ -12,8 +12,6 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.static("public"));
 
 
-mongoose.connect('mongodb+srv://todolistSagor:KmDjq6FDinZWPOxN@cluster0.g7yhifc.mongodb.net/todolistDBVV', {useNewUrlParser: true});
-
 const itemSchema = {
 	name : String
 }
