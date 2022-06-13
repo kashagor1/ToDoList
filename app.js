@@ -55,7 +55,7 @@ app.get("/",(req,res)=>{
 			if(err){
 				console.log(err);
 			}else{
-				console.log("Successful");
+				//console.log("Successful");
 			}
 		});
 		res.redirect("/");
@@ -98,7 +98,7 @@ app.get("/:cURL",(req,res)=>{
 
 app.post("/",(req,res)=>{
 	newPage =  req.body.list;
-	console.log(newPage);
+//	console.log(newPage);
 	newTask = new Item({name : req.body.newtask});
 
 		
@@ -109,7 +109,7 @@ app.post("/",(req,res)=>{
 		List.findOne({name:newPage},(err,result)=>{
 			result.item.push(newTask);
 			result.save();
-			console.log(result);
+		//	console.log(result);
 			res.redirect("/"+newPage);
 		})
 	}
