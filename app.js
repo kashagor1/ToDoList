@@ -146,6 +146,9 @@ app.post("/delete",(req,res)=>{
 app.get("/about",(req,res)=>{
 	res.render("about");
 });
-app.listen(3000,()=>{
-	console.log("Server Started on Port 3000");
+
+
+let port = process.env.PORT;
+app.listen(port,()=>{
+	console.log("Server Started on Port");
 });
